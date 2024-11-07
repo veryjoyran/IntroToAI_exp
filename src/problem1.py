@@ -34,7 +34,7 @@ def enter_random_map_mode():
     # 用户输入地图参数
     map_width = simpledialog.askinteger("输入", "请输入地图宽度：", minvalue=5, maxvalue=50)
     map_height = simpledialog.askinteger("输入", "请输入地图高度：", minvalue=5, maxvalue=50)
-    cell_size = simpledialog.askinteger("输入", "请输入单元格大小（像素）：", minvalue=20, maxvalue=100)
+    cell_size = simpledialog.askinteger("输入", "请输入单元格大小（像素）：", minvalue=10, maxvalue=100)
     start_x = simpledialog.askinteger("输入", "请输入起点的X坐标：", minvalue=1, maxvalue=map_width - 2)
     start_y = simpledialog.askinteger("输入", "请输入起点的Y坐标：", minvalue=1, maxvalue=map_height - 2)
     goal_x = simpledialog.askinteger("输入", "请输入终点的X坐标：", minvalue=1, maxvalue=map_width - 2)
