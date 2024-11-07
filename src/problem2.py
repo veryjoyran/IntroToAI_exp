@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import Canvas
+from tkinter import Canvas, Text, Scrollbar, END
 import numpy as np
 
 # 定义颜色
@@ -71,12 +71,12 @@ class MDP:
                     self.states.append((i, j))
                     self.rewards[(i, j)] = -10
                     self.traps.append((i, j))
-                    self.terminal_states.append((i, j))
+                    # 不将陷阱添加到终端状态
                 elif cell == '+10':
                     self.states.append((i, j))
                     self.rewards[(i, j)] = 10
                     self.exit = (i, j)
-                    self.terminal_states.append((i, j))
+                    self.terminal_states.append((i, j))  # 仅将出口作为终端状态
                 elif cell == 'A':
                     self.states.append((i, j))
                     self.rewards[(i, j)] = MOVE_COST
@@ -96,12 +96,16 @@ class MDP:
             return ACTIONS
 
     def get_transition_states_and_probs(self, state, action):
-        result = []
+        transition_probs = {}
         for a, prob in ACTION_PROBS[action].items():
             new_state = (state[0] + DELTA[a][0], state[1] + DELTA[a][1])
             if not self.is_valid_state(new_state):
                 new_state = state  # 碰壁，留在原地
-            result.append((new_state, prob))
+            if new_state in transition_probs:
+                transition_probs[new_state] += prob
+            else:
+                transition_probs[new_state] = prob
+        result = [(new_state, prob) for new_state, prob in transition_probs.items()]
         return result
 
     def get_reward(self, state):
@@ -117,6 +121,7 @@ def value_iteration(mdp, epsilon=0.01):
         V_old = V.copy()
         for state in mdp.states:
             if state in mdp.terminal_states:
+                V[state] = mdp.get_reward(state)
                 continue
             max_value = float('-inf')
             for action in mdp.get_possible_actions(state):
@@ -202,47 +207,104 @@ def render_map(canvas, map_data, agent_position=None, policy=None):
         x2, y2 = x1 + CELL_SIZE, y1 + CELL_SIZE
         canvas.create_oval(x1 + 10, y1 + 10, x2 - 10, y2 - 10, fill=AGENT_COLOR)
 
-def simulate_agent(mdp, policy):
-    """生成智能体按照最优策略的行走路径"""
+def simulate_agent(mdp, policy, output_text):
+    """生成智能体按照最优策略的行走路径，并输出详细信息"""
     state = mdp.agent_start
     path = [state]
-    while state not in mdp.terminal_states:
+    total_reward = 0  # 记录总奖励
+    step = 0  # 记录步数
+
+    while state != mdp.exit:
         action = policy[state]
+        if action is None:
+            break
+
+        # 输出当前状态和行动
+        reward = mdp.get_reward(state)
+        total_reward += reward
+
+        output_info = f"步骤 {step}:\n"
+        output_info += f"当前位置: {state}\n"
+        output_info += f"即时奖励: {reward}\n"
+        output_info += f"采取行动: {action}\n"
+
         # 由于有噪声，这里模拟一次实际动作
-        probs = []
-        next_states = []
+        transition_probs = {}
         for a, prob in ACTION_PROBS[action].items():
             next_state = (state[0] + DELTA[a][0], state[1] + DELTA[a][1])
             if not mdp.is_valid_state(next_state):
                 next_state = state
-            probs.append(prob)
-            next_states.append(next_state)
+            if next_state in transition_probs:
+                transition_probs[next_state] += prob
+            else:
+                transition_probs[next_state] = prob
+        next_states = list(transition_probs.keys())
+        probs = [transition_probs[s] for s in next_states]
         # 根据概率选择下一个状态
         idx = np.random.choice(range(len(next_states)), p=probs)
-        state = next_states[idx]
+        next_state = next_states[idx]
+
+        # 输出实际移动结果
+        actual_action = None
+        for a in ACTIONS:
+            ns = (state[0] + DELTA[a][0], state[1] + DELTA[a][1])
+            if not mdp.is_valid_state(ns):
+                ns = state
+            if ns == next_state:
+                actual_action = a
+                break
+
+        output_info += f"实际移动方向: {actual_action}\n"
+        state = next_state
         path.append(state)
-        if len(path) > 100:  # 防止无限循环
+        step += 1
+
+        output_info += f"移动后位置: {state}\n"
+        output_info += f"累积总奖励: {total_reward}\n"
+        output_info += "-" * 30 + "\n"
+
+        # 在文本区域输出信息
+        output_text.insert(END, output_info)
+        output_text.see(END)  # 滚动到最后一行
+
+        if len(path) > 500:  # 防止无限循环
             break
-    return path
+    return path, total_reward
 
 def main():
     # 创建MDP
     mdp = MDP(MAP_DATA)
     # 值迭代求解最优策略
     V, policy = value_iteration(mdp)
-    # 生成智能体的路径
-    path = simulate_agent(mdp, policy)
-
     # 创建Tkinter主窗口
     root = tk.Tk()
     root.title("迷宫最优策略与路径")
 
     # 创建画布
     canvas = Canvas(root, width=mdp.cols * CELL_SIZE, height=mdp.rows * CELL_SIZE)
-    canvas.pack()
+    canvas.pack(side=tk.LEFT)
+
+    # 创建文本区域用于输出信息
+    output_text = Text(root, width=40)
+    output_text.pack(side=tk.RIGHT, fill=tk.Y)
+    scrollbar = Scrollbar(root)
+    scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+    output_text.config(yscrollcommand=scrollbar.set)
+    scrollbar.config(command=output_text.yview)
 
     # 渲染初始地图和最优策略
     render_map(canvas, MAP_DATA, agent_position=mdp.agent_start, policy=policy)
+
+    # 在外层作用域中初始化变量
+    path = []
+    total_reward = 0
+
+    # 添加“开始”按钮
+    def start_animation():
+        nonlocal path, total_reward
+        # 生成智能体的路径，并输出详细信息
+        path, total_reward = simulate_agent(mdp, policy, output_text)
+        animate()
 
     # 开始动画
     def animate(step=0):
@@ -254,15 +316,13 @@ def main():
             # 动画结束，显示结束信息
             state = path[-1]
             if state == mdp.exit:
-                canvas.create_text(mdp.cols * CELL_SIZE // 2, mdp.rows * CELL_SIZE // 2, text="到达出口！", fill="green", font=("Arial", 24))
-            elif state in mdp.traps:
-                canvas.create_text(mdp.cols * CELL_SIZE // 2, mdp.rows * CELL_SIZE // 2, text="掉入陷阱！", fill="red", font=("Arial", 24))
+                canvas.create_text(mdp.cols * CELL_SIZE // 2, mdp.rows * CELL_SIZE // 2,
+                                   text="到达出口！", fill="green", font=("Arial", 24))
             else:
-                canvas.create_text(mdp.cols * CELL_SIZE // 2, mdp.rows * CELL_SIZE // 2, text="模拟结束", fill="blue", font=("Arial", 24))
-
-    # 添加“开始”按钮
-    def start_animation():
-        animate()
+                canvas.create_text(mdp.cols * CELL_SIZE // 2, mdp.rows * CELL_SIZE // 2,
+                                   text="模拟结束", fill="blue", font=("Arial", 24))
+            # 输出总奖励
+            output_text.insert(END, f"模拟结束！总累积奖励: {total_reward}\n")
 
     start_button = tk.Button(root, text="开始", command=start_animation)
     start_button.pack()
@@ -270,5 +330,7 @@ def main():
     # 运行主循环
     root.mainloop()
 
+
 # 运行程序
-main()
+if __name__ == "__main__":
+    main()
