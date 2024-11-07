@@ -140,6 +140,12 @@
 │     │  └── Start_Goal.png      
 └── README.md              # 项目说明文档  
 
+## 注意事项
+My_Map.py中的    
+start_goal_image = Image.open("E:\Python_Project\IntroToAI_exp\src\image\Start_Goal.png")    
+agent_image = Image.open("E:\Python_Project\IntroToAI_exp\src\image\Agent.png")      
+路径记得更换
+
 ## 参考文献
 
 1. Russell, S. J., & Norvig, P. (2010). *Artificial Intelligence: A Modern Approach*. Prentice Hall.
