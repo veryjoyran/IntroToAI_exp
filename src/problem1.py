@@ -47,6 +47,9 @@ def enter_random_map_mode():
     global my_map
     my_map = My_Map(width=map_width, height=map_height, cell_size=cell_size, canvas=canvas)
 
+    # 创建路径代价标签
+    my_map.create_cost_label(root)
+
     # 生成随机地图
     generate_random_map()
 
@@ -87,6 +90,9 @@ def enter_predefined_map_mode():
     # 初始化 My_Map 对象
     global my_map
     my_map = My_Map(width=map_width, height=map_height, cell_size=cell_size, canvas=canvas)
+
+    # 创建路径代价标签
+    my_map.create_cost_label(root)
 
     # 设置预定义地图
     my_map.set_map(MAP)
