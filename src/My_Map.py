@@ -41,8 +41,8 @@ class My_Map:
 
         # 调整图片大小并加载
         try:
-            start_goal_image = Image.open("D:\python_project\IntroToAI_exp\src\image\Start_Goal.png")
-            agent_image = Image.open("D:\python_project\IntroToAI_exp\src\image\Agent.png")
+            start_goal_image = Image.open("E:\Python_Project\IntroToAI_exp\src\image\Start_Goal.png")
+            agent_image = Image.open("E:\Python_Project\IntroToAI_exp\src\image\Agent.png")
         except FileNotFoundError:
             # 使用简单的颜色块代替图片
             start_goal_image = Image.new("RGB", (self.cell_size - 1, self.cell_size - 1), (255, 0, 0))
