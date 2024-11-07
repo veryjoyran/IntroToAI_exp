@@ -139,3 +139,12 @@
 │    │   ├── Agent.png    
 │     │  └── Start_Goal.png      
 └── README.md              # 项目说明文档  
+
+## 参考文献
+
+1. Russell, S. J., & Norvig, P. (2010). *Artificial Intelligence: A Modern Approach*. Prentice Hall.
+2. Python Software Foundation. (n.d.). *Python Documentation*. Retrieved from [https://docs.python.org/3/](https://docs.python.org/3/)
+3. TkDocs. (n.d.). *Tkinter Tutorial*. Retrieved from [https://tkdocs.com/tutorial/](https://tkdocs.com/tutorial/)
+4. Van Rossum, G., & Drake, F. L. (2009). *The Python Language Reference Manual*. Network Theory Ltd.
+5. Scipy Community. (n.d.). *NumPy Documentation*. Retrieved from [https://numpy.org/doc/](https://numpy.org/doc/)
+
